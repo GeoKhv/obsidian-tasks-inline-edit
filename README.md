@@ -24,11 +24,11 @@ Task mapping depends on internal Tasks APIs and DOM classes. Inline writes are e
 
 ## Install
 
-Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/GeoKhv/obsidian-tasks-inline-edit/releases/latest). Put them in `<vault>/.obsidian/plugins/tasks-inline-edit/`, reload Obsidian, and enable **Tasks Inline Edit** in Community plugins. Install and enable Tasks separately.
+Available in the [Obsidian Community directory](https://community.obsidian.md/plugins/tasks-inline-edit). Open **Settings → Community plugins → Browse**, find **Tasks Inline Edit**, then install and enable it. Install and enable Tasks separately.
+
+For manual installation, download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/GeoKhv/obsidian-tasks-inline-edit/releases/latest). Put them in `<vault>/.obsidian/plugins/tasks-inline-edit/`, reload Obsidian, and enable **Tasks Inline Edit** in Community plugins. Install and enable Tasks separately.
 
 For [BRAT](https://github.com/TfTHacker/obsidian42-brat), add `GeoKhv/obsidian-tasks-inline-edit`.
-
-A GitHub release does not itself make the plugin available in Obsidian's Browse directory. Directory availability is managed separately through Obsidian Community.
 
 ## Limits and safe fallbacks
 
@@ -42,7 +42,7 @@ A GitHub release does not itself make the plugin available in Obsidian's Browse 
 
 ## Privacy and license
 
-The plugin runs locally. It makes no network requests, collects no telemetry, needs no account, and accesses no files outside the vault. It reads Tasks' in-memory cache and writes only the selected task's source note through `Vault.process()`. Obsidian or other installed plugins may sync or process that note independently.
+The plugin runs locally. It makes no network requests, collects no telemetry, needs no account, and accesses no files outside the vault. It reads Tasks' in-memory cache and checks Markdown filenames in the vault to disambiguate source backlinks. It writes only the selected task's source note through `Vault.process()`. Obsidian or other installed plugins may sync or process that note independently.
 
 MIT © 2026 Geo. This is an independent companion, not an official Obsidian or Tasks product.
 
