@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check
+        run: npm run check
+
+      - name: Test and build
+        run: npm test
+
+      - name: Validate release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f main.js
+          test -f manifest.json
+          test "${GITHUB_REF_NAME}" = "$(node -p "require('./manifest.json').version")"
+          grep -q '"id": "tasks-inline-edit"' manifest.json
+          grep -q "\"version\": \"${GITHUB_REF_NAME}\"" manifest.json
+
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir release-assets
+          cp main.js manifest.json release-assets/
+          if [ -f styles.css ]; then
+            cp styles.css release-assets/
+          fi
+
+      - name: Package and checksum
+        shell: bash
+        run: |
+          cd release-assets
+          zip "tasks-inline-edit-${GITHUB_REF_NAME}.zip" main.js manifest.json styles.css
+          sha256sum main.js manifest.json styles.css *.zip > SHA256SUMS.txt
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk -v version="${GITHUB_REF_NAME}" '
+            $0 == "## " version { in_section = 1; next }
+            /^## / && in_section { exit }
+            in_section { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
+
+      - name: Generate main.js attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: release-assets/main.js
+
+      - name: Generate manifest.json attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: release-assets/manifest.json
+
+      - name: Attest styles and archive
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            release-assets/styles.css
+            release-assets/*.zip
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          body_path: release-notes.md
+          files: release-assets/*

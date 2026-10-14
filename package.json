@@ -1,0 +1,23 @@
+{
+  "name": "obsidian-tasks-inline-edit",
+  "private": true,
+  "version": "0.1.2",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "check": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.8.7",
+    "typescript": "^5.8.0"
+  },
+  "author": "Geo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GeoKhv/obsidian-tasks-inline-edit.git"
+  }
+}

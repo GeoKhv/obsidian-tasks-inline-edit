@@ -1,0 +1,57 @@
+# Tasks Inline Edit
+
+Edit task descriptions directly in rendered [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) queries, while continuing to write ordinary Markdown around them.
+
+Click the description to place a caret, change the text, then press **Enter** to save or **Escape** to cancel. Clicking outside saves changed text. Blank query and callout space stays rendered in Live Preview instead of exposing the query code. Long descriptions keep their normal wrapping when editing begins.
+
+![Editing a long task in Live Preview](docs/inline-edit.png)
+
+## What it does
+
+- Borderless editing in Live Preview and Reading view.
+- Writes the description back to its original task note.
+- Preserves recognized status, priority, dates, recurrence, IDs and other suffix metadata.
+- Leaves checkboxes, status menus, links, dates, the Tasks pencil and callout folding available.
+- Checks the source line before writing and refuses ambiguous or conflicting edits.
+
+The colored task blocks and custom status icons in the screenshot come from a separate CSS snippet, not this plugin.
+
+## Compatibility
+
+Desktop Obsidian **1.13.7 or newer**, with Tasks **8.4.0 or 8.5.0**. The current release was tested in Obsidian 1.13.7 on macOS with Tasks 8.5.0. Windows, Linux and other themes have not received manual acceptance testing. Mobile is not enabled.
+
+Task mapping depends on internal Tasks APIs and DOM classes. Inline writes are enabled only for the two supported Tasks versions. Other versions show a notice; use the native pencil while an updated adapter is being verified. Recognized query backgrounds remain protected against accidental source activation.
+
+## Install
+
+Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/GeoKhv/obsidian-tasks-inline-edit/releases/latest). Put them in `<vault>/.obsidian/plugins/tasks-inline-edit/`, reload Obsidian, and enable **Tasks Inline Edit** in Community plugins. Install and enable Tasks separately.
+
+For [BRAT](https://github.com/TfTHacker/obsidian42-brat), add `GeoKhv/obsidian-tasks-inline-edit`.
+
+A GitHub release does not itself make the plugin available in Obsidian's Browse directory. Directory availability is managed separately through Obsidian Community.
+
+## Limits and safe fallbacks
+
+- Exact duplicate descriptions/statuses can be ambiguous, especially with hidden backlinks. The plugin refuses these edits.
+- Editing displays raw Markdown for links and formatting. Raw syntax can take more space than its rendered form; this is normal. Clicking existing links follows their normal action.
+- Some unusual formatting or metadata placement is refused by the conservative parser.
+- Changes in an open source editor must be saved before inline writing can proceed.
+- Native Tasks actions can reorder metadata while its cache retains an older source line. If a notice says the cache no longer matches, use the pencil. The exact-source guard is deliberately retained.
+- A save conflict keeps your entered text in place and leaves the file unchanged. Resolve the source conflict before retrying.
+- Descriptions must be nonempty single lines. Enter saves rather than inserting a newline.
+
+## Privacy and license
+
+The plugin runs locally. It makes no network requests, collects no telemetry, needs no account, and accesses no files outside the vault. It reads Tasks' in-memory cache and writes only the selected task's source note through `Vault.process()`. Obsidian or other installed plugins may sync or process that note independently.
+
+MIT © 2026 Geo. This is an independent companion, not an official Obsidian or Tasks product.
+
+## Development
+
+```sh
+npm ci
+npm run check
+npm test
+```
+
+`npm test` builds the plugin and runs the source-edit and event-routing tests. Run `npm run build` to rebuild without tests. See [manual acceptance](docs/acceptance.md) for real-app checks. Release artifacts are built in GitHub Actions, include SHA-256 checksums, and have GitHub artifact attestations.
