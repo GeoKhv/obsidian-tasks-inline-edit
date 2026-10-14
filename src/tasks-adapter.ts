@@ -95,7 +95,7 @@ export function resolveRow(app: App, target: Element): ResolvedRow | null {
   const descriptionElement = target.closest(DESCRIPTION);
   const row = target.closest(ROW);
   const query = row?.closest(QUERY);
-  if (!(descriptionElement instanceof HTMLElement) || !(row instanceof HTMLElement) || !query) return null;
+  if (!descriptionElement?.instanceOf(HTMLElement) || !row?.instanceOf(HTMLElement) || !query) return null;
   if (!row.closest(RESULT)) return null;
   let tasks: CachedTask[];
   try {

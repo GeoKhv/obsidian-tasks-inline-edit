@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.3
+
+- Fix community-directory validation: simplify the manifest description.
+- Give temporary Markdown previews a short-lived child component and unload it after rendering, avoiding render-handler accumulation on the main plugin.
+- Use Obsidian DOM creation helpers and cross-window-safe HTMLElement checks.
+- Retain inline wrapping, source conflict guards and Tasks compatibility.
+
+Validation: TypeScript checks and all 12 tests passed. Release assets have verified GitHub artifact attestations.
+
+Install the three plugin files from this release or unpack `tasks-inline-edit-0.1.3.zip`.
+
 ## 0.1.2
 
 First public release of Tasks Inline Edit.

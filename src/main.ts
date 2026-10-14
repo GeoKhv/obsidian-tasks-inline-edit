@@ -1,4 +1,4 @@
-import { MarkdownRenderer, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { Component, MarkdownRenderer, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { applyEdit, parseTaskLine, snapshotAt, type Snapshot } from './line';
 import { captureAction, hasSupportedTasks, queryHit, resolveRow, type ResolvedRow } from './tasks-adapter';
 
@@ -40,7 +40,7 @@ export default class TasksInlineEdit extends Plugin {
 
   private guardNativeClick(root: HTMLElement): void {
     const editor = root.closest('.cm-embed-block')?.closest('.cm-content');
-    if (!(editor instanceof HTMLElement)) return;
+    if (!editor?.instanceOf(HTMLElement)) return;
     if (this.guardedRoots.has(root)) return;
     this.guardedRoots.add(root);
     // Pointer and mouse handlers on the actual control run before these.
@@ -73,7 +73,7 @@ export default class TasksInlineEdit extends Plugin {
         }
         const hit = queryHit(e.target);
         if (!hit) return;
-        if (hit.root instanceof HTMLElement) this.guardNativeClick(hit.root);
+        if (hit.root.instanceOf(HTMLElement)) this.guardNativeClick(hit.root);
         const action = captureAction(hit.kind, event);
         if (action === 'prevent-focus') {
           // A mouse-down focus transfer can select the fenced source before
@@ -148,7 +148,7 @@ export default class TasksInlineEdit extends Plugin {
     }
     const editor = resolved.descriptionElement;
     if (!editor.isConnected) return;
-    const originalNodes = document.createDocumentFragment();
+    const originalNodes = createFragment();
     while (editor.firstChild) originalNodes.appendChild(editor.firstChild);
     editor.textContent = parsed.description;
     editor.setAttribute('contenteditable', 'plaintext-only');
@@ -208,14 +208,17 @@ export default class TasksInlineEdit extends Plugin {
       if (editing.editor.isConnected) {
         const parsed = parseTaskLine(editing.snapshot.line);
         const tags = parsed ? [...parsed.suffix.matchAll(/\s+(#[^\s#]+)/gu)].map(match => match[1]) : [];
-        const preview = document.createElement('span');
+        const preview = createSpan();
+        const component = this.addChild(new Component());
         try {
-          await MarkdownRenderer.render(this.app, [value, ...tags].join(' '), preview, editing.file.path, this);
+          await MarkdownRenderer.render(this.app, [value, ...tags].join(' '), preview, editing.file.path, component);
           const paragraph = preview.querySelector('p');
           editing.editor.replaceChildren(...Array.from(paragraph?.childNodes ?? preview.childNodes));
         } catch (error) {
           console.warn('Tasks Inline Edit: preview rendering failed; Tasks will redraw', error);
           editing.editor.textContent = [value, ...tags].join(' ');
+        } finally {
+          this.removeChild(component);
         }
       }
       this.finish(editing, false);
