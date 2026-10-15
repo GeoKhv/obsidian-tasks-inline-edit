@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+- Add a persistent, enabled-by-default parent-context toggle in Settings → Tasks Inline Edit. Changes take effect without reloading; disabling unloads the context component.
+- Show muted ancestor links under flat Tasks query results while preserving independent subtask statuses.
+- Follow source nesting, including ordinary list items; refresh context after parent edits and status changes.
+- Open the exact ancestor line in the editor with a stale-source guard that ignores inactive Reading-view buffers; omit ambiguous matches and already nested rows.
+- Index query-row candidates once per refresh to avoid scanning the full Tasks cache for every row.
+
+Validation: TypeScript check and 16 tests passed. Local Obsidian 1.13.7 / Tasks 8.5.0 checks covered Live Preview inline save, checkbox transition to DONE with context retained, parent rename plus line insertion, exact-line navigation, and Reading view rendering. The settings toggle was verified through native UI clicks: labels disappear immediately, the disabled preference survives plugin reload, and re-enabling restores labels with one context component.
+
 ## 0.1.3
 
 - Fix community-directory validation: simplify the manifest description.

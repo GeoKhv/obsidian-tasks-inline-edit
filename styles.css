@@ -11,3 +11,26 @@
   caret-color: currentColor;
   vertical-align: baseline;
 }
+
+.plugin-tasks-query-result .tasks-parent-context {
+  display: block;
+  margin: 0.12em 0 0.35em;
+  font-size: 0.84em;
+  line-height: 1.5;
+  color: var(--text-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.plugin-tasks-query-result .tasks-parent-context a {
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.plugin-tasks-query-result .tasks-parent-context a:hover,
+.plugin-tasks-query-result .tasks-parent-context a:focus-visible {
+  color: var(--text-accent);
+  text-decoration: underline;
+}

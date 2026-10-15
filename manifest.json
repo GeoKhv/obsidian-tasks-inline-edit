@@ -1,7 +1,7 @@
 {
   "id": "tasks-inline-edit",
   "name": "Tasks Inline Edit",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "minAppVersion": "1.13.7",
   "description": "Edit task descriptions directly in rendered Tasks queries.",
   "author": "Geo",

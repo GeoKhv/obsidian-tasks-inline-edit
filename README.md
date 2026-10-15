@@ -16,6 +16,14 @@ Click the description to place a caret, change the text, then press **Enter** to
 
 The colored task blocks and custom status icons in the screenshot come from a separate CSS snippet, not this plugin.
 
+## Parent context in task lists
+
+In **Settings → Tasks Inline Edit**, use **Показывать контекст родительских задач** to show or hide ancestor labels. It is enabled by default, applies immediately, and is remembered after restart. Disabling it also stops context observers; inline editing remains available.
+
+Flat query results show a muted, clickable ancestor chain below each unambiguously identified subtask. Tasks keep their own statuses and query membership. Labels follow the source nesting, including ordinary list items, and refresh when the source changes. Clicking an ancestor opens its exact source line in the editor (also from Reading view), after checking that the cached line is still current. The feature does not rewrite task descriptions or add IDs.
+
+Rows that cannot be mapped uniquely (for example identical descriptions and statuses with the same backlink) receive no context, rather than a guessed parent. Nested rows already displayed by `show tree` are not decorated. Context is supported in the main desktop window in Live Preview and Reading view.
+
 ## Compatibility
 
 Desktop Obsidian **1.13.7 or newer**, with Tasks **8.4.0 or 8.5.0**. The current release was tested in Obsidian 1.13.7 on macOS with Tasks 8.5.0. Windows, Linux and other themes have not received manual acceptance testing. Mobile is not enabled.

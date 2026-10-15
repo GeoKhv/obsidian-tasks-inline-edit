@@ -1,6 +1,7 @@
-import { Component, MarkdownRenderer, MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { Component, MarkdownRenderer, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import { applyEdit, parseTaskLine, snapshotAt, type Snapshot } from './line';
 import { captureAction, hasSupportedTasks, queryHit, resolveRow, type ResolvedRow } from './tasks-adapter';
+import { ParentContext } from './parent-context';
 
 type Editing = {
   resolved: ResolvedRow;
@@ -34,6 +35,8 @@ function placeCaret(editor: HTMLElement, offset: number): void {
 }
 
 export default class TasksInlineEdit extends Plugin {
+  settings = { showParentContext: true };
+  private parentContext: ParentContext | null = null;
   private editing: Editing | null = null;
   private guardedRoots = new WeakSet<Element>();
   private guardedEditors = new WeakSet<Element>();
@@ -62,7 +65,11 @@ export default class TasksInlineEdit extends Plugin {
     });
   }
 
-  onload(): void {
+  async onload(): Promise<void> {
+    const stored = await this.loadData();
+    this.settings = { showParentContext: stored?.showParentContext !== false };
+    this.addSettingTab(new TasksInlineEditSettings(this));
+    this.updateParentContext();
     const root = window;
     for (const event of ['pointerdown', 'mousedown'] as const) {
       this.registerDomEvent(root, event, (e: MouseEvent | PointerEvent) => {
@@ -121,6 +128,24 @@ export default class TasksInlineEdit extends Plugin {
 
   onunload(): void {
     this.cancel();
+  }
+
+  async setShowParentContext(enabled: boolean): Promise<void> {
+    const next = { ...this.settings, showParentContext: enabled };
+    // Do not change the running feature if persisting the preference fails.
+    await this.saveData(next);
+    this.settings = next;
+    this.updateParentContext();
+  }
+
+  private updateParentContext(): void {
+    if (this.settings.showParentContext && !this.parentContext) {
+      this.parentContext = this.addChild(new ParentContext(this.app));
+    } else if (!this.settings.showParentContext && this.parentContext) {
+      // Unload removes labels, disconnects observers and cancels pending work.
+      this.removeChild(this.parentContext);
+      this.parentContext = null;
+    }
   }
 
   private async open(resolved: ResolvedRow, clickedOffset: number | null): Promise<void> {
@@ -244,5 +269,30 @@ export default class TasksInlineEdit extends Plugin {
 
   private cancel(): void {
     if (this.editing) this.finish(this.editing);
+  }
+}
+
+class TasksInlineEditSettings extends PluginSettingTab {
+  constructor(private plugin: TasksInlineEdit) { super(plugin.app, plugin); }
+
+  display(): void {
+    this.containerEl.empty();
+    new Setting(this.containerEl)
+      .setName('Показывать контекст родительских задач')
+      .setDesc('Добавляет под подзадачами кликабельную цепочку родителей. Статусы и распределение по спискам не меняются.')
+      .addToggle(toggle => toggle
+        .setValue(this.plugin.settings.showParentContext)
+        .onChange(async enabled => {
+          toggle.setDisabled(true);
+          try {
+            await this.plugin.setShowParentContext(enabled);
+          } catch (error) {
+            toggle.setValue(this.plugin.settings.showParentContext);
+            new Notice('Не удалось сохранить настройку контекста задач. Попробуйте ещё раз.');
+            console.error('Tasks Inline Edit: saving settings failed', error);
+          } finally {
+            toggle.setDisabled(false);
+          }
+        }));
   }
 }

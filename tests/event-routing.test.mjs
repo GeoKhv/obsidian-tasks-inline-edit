@@ -84,10 +84,12 @@ for (const livePreview of [true, false]) {
     const date = new El('span', 'task-due', f.row);
     const edit = new El('a', 'tasks-edit', f.row);
     const status = new El('button', '', f.row);
+    const context = new El('span', 'tasks-parent-context', f.row);
+    const parentLink = new El('a', '', context);
     assert.equal(queryHit(word)?.kind, 'description');
     assert.equal(queryHit(f.processor)?.kind, 'background');
     assert.equal(queryHit(f.row)?.kind, 'background');
-    for (const control of [link, checkbox, date, edit, status]) {
+    for (const control of [link, checkbox, date, edit, status, parentLink]) {
       assert.equal(queryHit(control)?.kind, 'control');
     }
     // The surrounding CodeMirror contenteditable does not turn the query into a control.

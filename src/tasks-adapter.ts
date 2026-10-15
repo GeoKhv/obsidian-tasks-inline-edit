@@ -39,7 +39,34 @@ export type CachedTask = {
   taskLocation: { lineNumber: number; path: string };
   status: { symbol: string };
   getLinkText(options: { isFilenameUnique: boolean }): string | null;
+  parent?: ParentItem | null;
 };
+
+export type ParentItem = {
+  path: string;
+  description: string;
+  originalMarkdown: string;
+  taskLocation: { lineNumber: number; path: string };
+  parent?: ParentItem | null;
+};
+
+// Tasks includes plain list items in the ancestor chain as well as tasks.
+// Do not infer ancestry from query order: filtering and sorting change it.
+export function parentChain(task: CachedTask): ParentItem[] {
+  const chain: ParentItem[] = [];
+  const seen = new Set<ParentItem>([task]);
+  let childLine = task.taskLocation.lineNumber;
+  for (let item = task.parent; item; item = item.parent) {
+    if (seen.has(item) || item.path !== task.path ||
+        !Number.isInteger(item.taskLocation?.lineNumber) ||
+        item.taskLocation.lineNumber < 0 || item.taskLocation.lineNumber >= childLine ||
+        typeof item.description !== 'string' || typeof item.originalMarkdown !== 'string') return [];
+    seen.add(item);
+    childLine = item.taskLocation.lineNumber;
+    chain.unshift(item);
+  }
+  return chain;
+}
 
 type TasksPlugin = { manifest?: { version: string }; getTasks?: () => CachedTask[] };
 
@@ -52,7 +79,7 @@ function installedTasks(app: App): TasksPlugin | null {
 
 export function hasSupportedTasks(app: App): boolean { return !!installedTasks(app); }
 
-function displayText(markdown: string): string {
+export function displayText(markdown: string): string {
   return markdown
     .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/gu, '$2')
     .replace(/\[\[([^\]]+)\]\]/gu, '$1')
@@ -89,9 +116,24 @@ export function isInertQuerySpace(app: App, target: Element): boolean {
   return !!installedTasks(app) && queryHit(target)?.kind === 'background';
 }
 
-export function resolveRow(app: App, target: Element): ResolvedRow | null {
+export function createRowResolver(app: App): (target: Element) => ResolvedRow | null {
   const plugin = installedTasks(app);
-  if (!plugin) return null;
+  if (!plugin) return () => null;
+  const index = new Map<string, CachedTask[]>();
+  try {
+    for (const task of plugin.getTasks!()) {
+      const key = task.status.symbol.trim() + '\n' + displayText(task.description);
+      const bucket = index.get(key) ?? [];
+      bucket.push(task);
+      index.set(key, bucket);
+    }
+  } catch {
+    return () => null;
+  }
+  return target => resolveIndexedRow(app, target, index);
+}
+
+function resolveIndexedRow(app: App, target: Element, index: Map<string, CachedTask[]>): ResolvedRow | null {
   const descriptionElement = target.closest(DESCRIPTION);
   const row = target.closest(ROW);
   const query = row?.closest(QUERY);
@@ -99,7 +141,8 @@ export function resolveRow(app: App, target: Element): ResolvedRow | null {
   if (!row.closest(RESULT)) return null;
   let tasks: CachedTask[];
   try {
-    tasks = plugin.getTasks!().filter(task => matches(app, row, task));
+    const key = (row.dataset.task ?? '') + '\n' + rowDescription(row);
+    tasks = (index.get(key) ?? []).filter(task => matches(app, row, task));
   } catch (error) {
     console.warn('Tasks Inline Edit: verified Tasks integration changed', error);
     return null;
@@ -110,6 +153,10 @@ export function resolveRow(app: App, target: Element): ResolvedRow | null {
   // data-line is a position inside the rendered query group, *not* a source
   // line. Two identical rows cannot be safely distinguished by the DOM.
   return null;
+}
+
+export function resolveRow(app: App, target: Element): ResolvedRow | null {
+  return createRowResolver(app)(target);
 }
 
 export function plainDescriptionTarget(target: Element): boolean {
