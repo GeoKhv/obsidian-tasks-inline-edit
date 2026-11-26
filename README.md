@@ -26,9 +26,9 @@ Rows that cannot be mapped uniquely (for example identical descriptions and stat
 
 ## Compatibility
 
-Desktop Obsidian **1.13.7 or newer**, with Tasks **8.4.0 or 8.5.0**. The current release was tested in Obsidian 1.13.7 on macOS with Tasks 8.5.0. Windows, Linux and other themes have not received manual acceptance testing. Mobile is not enabled.
+Desktop Obsidian **1.13.7 or newer**, with Tasks **8.4.0, 8.5.0 or 8.6.0**. Parent navigation and inline saves were verified in desktop Obsidian on macOS with Tasks 8.6.0. Windows, Linux and other themes have not received manual acceptance testing. Mobile is not enabled.
 
-Task mapping depends on internal Tasks APIs and DOM classes. Inline writes are enabled only for the two supported Tasks versions. Other versions show a notice; use the native pencil while an updated adapter is being verified. Recognized query backgrounds remain protected against accidental source activation.
+Task mapping depends on internal Tasks APIs and DOM classes. Inline writes are enabled only for the supported Tasks versions. Parent labels and navigation also work on other Tasks versions when the cache and rendered rows still provide the required information. On these versions, use the native pencil for editing. Recognized query backgrounds remain protected against accidental source activation.
 
 ## Install
 

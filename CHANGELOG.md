@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Parent labels and links stay available after a Tasks update when the query row still maps uniquely to its source and Tasks provides its ancestors.
+- Inline editing now supports Tasks 8.6.0. On unverified Tasks versions, use the native pencil to edit.
+- Editing a task with trailing spaces or tabs preserves the whitespace and metadata, including due dates.
+
+Verified in desktop Obsidian with Tasks 8.6.0 using an inline save and a link to the parent line. The regression suite also covers an unrecognized Tasks version, ambiguous rows and incompatible cache data.
+
 ## 0.2.0
 
 - Add a persistent, enabled-by-default parent-context toggle in Settings → Tasks Inline Edit. Changes take effect without reloading; disabling unloads the context component.

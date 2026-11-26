@@ -50,3 +50,35 @@ test('refuses empty and multiline replacements', () => {
   assert.equal(replaceDescription('- [ ] Text', ''), null);
   assert.equal(replaceDescription('- [ ] Text', 'a\nb'), null);
 });
+
+
+test('separates metadata despite trailing spaces or tabs and preserves every byte', () => {
+  for (const tail of [' ', '\t', '  ', ' \t ']) {
+    for (const metadata of [' 📅 2026-10-19', ' 🔺 ⏳ 2026-10-18 📅 2026-10-19', ' #work', ' 🔁 every week 📅 2026-10-19', ' 📅 2026-10-19 ^task-id']) {
+      for (const ending of ['', '\r']) {
+        const line = '- [ ] Обсудить шаблон' + metadata + tail + ending;
+        assert.deepEqual(parseTaskLine(line), {
+          prefix: '- [ ] ', description: 'Обсудить шаблон',
+          suffix: metadata + tail, ending,
+        });
+        assert.equal(replaceDescription(line, 'Обсудить новый шаблон'),
+          '- [ ] Обсудить новый шаблон' + metadata + tail + ending);
+      }
+    }
+  }
+});
+
+test('preserves trailing whitespace without metadata and refuses whitespace-only tasks', () => {
+  for (const tail of [' ', '\t', '  ', ' \t ']) {
+    assert.equal(replaceDescription('- [ ] Текст' + tail, 'Новый'), '- [ ] Новый' + tail);
+    assert.equal(parseTaskLine('- [ ] ' + tail), null);
+  }
+});
+
+test('applies an edit with trailing whitespace without changing date or neighbouring lines', () => {
+  const source = 'Before\r\n- [ ] Обсудить шаблон 📅 2026-10-19 \r\nAfter';
+  const snapshot = snapshotAt(source, 1);
+  assert.ok(snapshot);
+  assert.equal(applyEdit(source, snapshot, 'Новый текст'),
+    'Before\r\n- [ ] Новый текст 📅 2026-10-19 \r\nAfter');
+});

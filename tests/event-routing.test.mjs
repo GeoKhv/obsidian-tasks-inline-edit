@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { captureAction, hasSupportedTasks, queryHit } from './tasks-adapter.mjs';
+import { captureAction, createRowResolver, hasSupportedTasks, parentChain, queryHit, resolveRow } from './tasks-adapter.mjs';
 
 // A small DOM tree is enough to test selector routing without loading Obsidian.
 class El {
@@ -61,7 +61,8 @@ test('verified Tasks versions remain editable after upgrade; unknown versions fa
   const appFor = version => ({ plugins: { plugins: { 'obsidian-tasks-plugin': { manifest: { version }, getTasks: () => [] } } } });
   assert.equal(hasSupportedTasks(appFor('8.4.0')), true);
   assert.equal(hasSupportedTasks(appFor('8.5.0')), true);
-  assert.equal(hasSupportedTasks(appFor('8.6.0')), false);
+  assert.equal(hasSupportedTasks(appFor('8.6.0')), true);
+  assert.equal(hasSupportedTasks(appFor('8.7.0')), false);
   assert.equal(hasSupportedTasks({ plugins: { plugins: {} } }), false);
 });
 
@@ -113,4 +114,32 @@ test('capture policy blocks source activation while preserving native click', ()
   assert.equal(captureAction('control', 'pointerdown'), 'native');
   assert.equal(captureAction('control', 'mousedown'), 'prevent-focus');
   assert.equal(captureAction('control', 'click'), 'native');
+});
+
+
+test('read-only context follows the cache contract across version changes', () => {
+  const oldHTMLElement = globalThis.HTMLElement;
+  globalThis.HTMLElement = El;
+  try {
+    const f = fixture(true);
+    f.row.dataset = { task: '' };
+    f.row.instanceOf = f.description.instanceOf = cls => cls === El;
+    f.description.textContent = 'Child';
+    const parent = { description: 'Project', path: 'Example.md', originalMarkdown: '- [/] Project', taskLocation: { lineNumber: 0 } };
+    const task = { ...parent, parent, description: 'Child', originalMarkdown: '  - [ ] Child', status: { symbol: ' ' }, taskLocation: { lineNumber: 1 } };
+    let cache = [task];
+    const plugin = { manifest: { version: '99.0.0' }, getTasks: () => cache };
+    const app = { plugins: { plugins: { 'obsidian-tasks-plugin': plugin } } };
+    const resolve = () => createRowResolver(app)(f.description);
+    assert.deepEqual(parentChain(resolve().task), [parent]);
+    assert.equal(resolveRow(app, f.description), null);
+    cache = [task, { ...task }];
+    assert.equal(resolve(), null);
+    for (cache of [null, {}, [task, {}]]) assert.equal(resolve(), null);
+    delete plugin.getTasks;
+    assert.equal(resolve(), null);
+  } finally {
+    if (oldHTMLElement === undefined) delete globalThis.HTMLElement;
+    else globalThis.HTMLElement = oldHTMLElement;
+  }
 });

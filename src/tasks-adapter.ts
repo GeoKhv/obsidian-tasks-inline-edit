@@ -1,6 +1,6 @@
 import type { App } from 'obsidian';
 
-// Tasks 8.4.0/8.5.0 integration. Its apiV1 offers modals and toggling, but no
+// Tasks 8.4.0/8.5.0/8.6.0 integration. Its apiV1 offers modals and toggling, but no
 // source-position lookup. These DOM classes and getTasks() are internal and
 // must be rechecked after a Tasks upgrade. A mismatch returns null.
 const ROW = 'li.plugin-tasks-list-item';
@@ -73,11 +73,14 @@ type TasksPlugin = { manifest?: { version: string }; getTasks?: () => CachedTask
 function installedTasks(app: App): TasksPlugin | null {
   const plugins = (app as App & { plugins?: { plugins?: Record<string, unknown> } }).plugins?.plugins;
   const plugin = plugins?.['obsidian-tasks-plugin'] as TasksPlugin | undefined;
-  return plugin?.manifest && ['8.4.0', '8.5.0'].includes(plugin.manifest.version) &&
-    typeof plugin.getTasks === 'function' ? plugin : null;
+  return typeof plugin?.getTasks === 'function' ? plugin : null;
 }
 
-export function hasSupportedTasks(app: App): boolean { return !!installedTasks(app); }
+// Writes depend on Tasks' serialization. Read-only context only needs its row mapping.
+export function hasSupportedTasks(app: App): boolean {
+  const version = installedTasks(app)?.manifest?.version;
+  return !!version && ['8.4.0', '8.5.0', '8.6.0'].includes(version);
+}
 
 export function displayText(markdown: string): string {
   return markdown
@@ -109,7 +112,7 @@ function matches(app: App, row: HTMLElement, task: CachedTask): boolean {
 export type ResolvedRow = { task: CachedTask; descriptionElement: HTMLElement; row: HTMLElement };
 
 export function isKnownTaskDescription(app: App, target: Element): boolean {
-  return !!installedTasks(app) && queryHit(target)?.kind === 'description';
+  return hasSupportedTasks(app) && queryHit(target)?.kind === 'description';
 }
 
 export function isInertQuerySpace(app: App, target: Element): boolean {
@@ -121,7 +124,13 @@ export function createRowResolver(app: App): (target: Element) => ResolvedRow | 
   if (!plugin) return () => null;
   const index = new Map<string, CachedTask[]>();
   try {
-    for (const task of plugin.getTasks!()) {
+    const tasks = plugin.getTasks!();
+    if (!Array.isArray(tasks)) return () => null;
+    for (const task of tasks) {
+      // An unidentifiable entry could be a duplicate. Do not infer uniqueness.
+      if (typeof task?.description !== 'string' || typeof task.status?.symbol !== 'string' ||
+          typeof task.path !== 'string' || !task.path || typeof task.originalMarkdown !== 'string' ||
+          !Number.isInteger(task.taskLocation?.lineNumber) || task.taskLocation.lineNumber < 0) return () => null;
       const key = task.status.symbol.trim() + '\n' + displayText(task.description);
       const bucket = index.get(key) ?? [];
       bucket.push(task);
@@ -156,7 +165,7 @@ function resolveIndexedRow(app: App, target: Element, index: Map<string, CachedT
 }
 
 export function resolveRow(app: App, target: Element): ResolvedRow | null {
-  return createRowResolver(app)(target);
+  return hasSupportedTasks(app) ? createRowResolver(app)(target) : null;
 }
 
 export function plainDescriptionTarget(target: Element): boolean {

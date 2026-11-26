@@ -19,9 +19,11 @@ export function parseTaskLine(line: string): TaskLine | null {
   const prefix = match[1];
   let body = bodyLine.slice(prefix.length);
   let suffix = '';
-  const hardBreak = body.match(/ {2,}$/u);
-  if (hardBreak) {
-    suffix = hardBreak[0];
+  // Detach trailing whitespace before matching metadata at the end of the line.
+  // Preserve it verbatim, including Markdown hard breaks and tabs.
+  const trailingWhitespace = body.match(/[ \t]+$/u);
+  if (trailingWhitespace) {
+    suffix = trailingWhitespace[0];
     body = body.slice(0, -suffix.length);
   }
   for (let i = 0; i < 24; i++) {
